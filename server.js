@@ -24,6 +24,24 @@ const users = [
   }
 ];
 
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token === null) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, process.env.SECRET_TOKEN, (err, user) => {
+    if (err) {
+      return res.sendStatus(403);
+    }
+
+    req.user = user;
+    next();
+  });
+};
+
 // Middleware to parse JSON requests
 app.use(express.json());
 
@@ -31,13 +49,13 @@ app.get('/', (req, res) => {
   res.send('Hello, Express!');
 });
 
-app.get('/users', (req, res) => {
-  res.json(users);
+app.get('/users', authenticateToken, (req, res) => {
+  res.json(users.filter(
+    user => user.username === req.user.name
+  ));
 });
 
 app.post('/login', (req, res) => {
-  // Authenticate user
-
   const username = req.body.username;
   const user = {
     name: username
