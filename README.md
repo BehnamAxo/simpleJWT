@@ -16,13 +16,30 @@ Before you begin, make sure you have the following installed:
 
 - Node.js and npm
 - An Integrated Development Environment (IDE) of your choice
-- Git (optional)
+- Git
 
 ## Getting Started
 
-Follow these steps to get started with the tutorial:
+Before you start the application, make sure to create a `.env` file in the root of your project and add the following configuration variable:
 
-1. Clone this repository (if you haven't already):
+```
+SECRET_TOKEN=your-secret-token
+```
 
-   ```shell
+Once you've added these tokens to your `.env` file, you can proceed with the installation and running instructions. Follow these steps to get started with the tutorial:
+
+Clone this repository (if you haven't already):
+
+   ```
+   shell
    git clone https://github.com/BehnamAxo/simpleJWT.git
+   ```
+
+
+## Running the Application
+
+To run the application, use the following command:
+
+```
+npm run start
+```

@@ -1,72 +1,79 @@
 require('dotenv').config();
+const {
+  authenticateToken,
+  generateAccessToken,
+  port,
+  users
+} = require('./utility');
 
 const express = require('express');
-const jwt = require('jsonwebtoken');
-
 const app = express();
-const port = 3014;
-const users = [
-  {
-    username: 'Behnam',
-    title: 'User 1'
-  },
-  {
-    username: 'Alex',
-    title: 'User 2'
-  },
-  {
-    username: 'Kelly',
-    title: 'User 3'
-  },
-  {
-    username: 'Lauren',
-    title: 'User 4'
-  }
-];
-
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token === null) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, process.env.SECRET_TOKEN, (err, user) => {
-    if (err) {
-      return res.sendStatus(403);
-    }
-
-    req.user = user;
-    next();
-  });
-};
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
 
 app.get('/', (req, res) => {
   res.send('Hello, Express!');
 });
 
-app.get('/users', authenticateToken, (req, res) => {
-  res.json(users.filter(
-    user => user.username === req.user.name
-  ));
+app.get('/me', authenticateToken, (req, res) => {
+  const filteredUser = users.filter(user => user.username === req.user.username);
+
+  if (filteredUser.length === 0) {
+    return res.status(404).json({
+      message: 'No user with this information exists'
+    });
+  }
+
+  res.json(filteredUser);
 });
 
 app.post('/login', (req, res) => {
   const username = req.body.username;
-  const user = {
-    name: username
-  };
 
-  const accessToken = jwt.sign(user, process.env.SECRET_TOKEN);
+  if (!username) {
+    return res.status(401).json({
+      message: 'Please provide a username'
+    });
+  }
+
+  const user = { username };
+  const accessToken = generateAccessToken(user);
+  const foundUser = users.find(u => u.username === user.username);
+
+  if (!foundUser) {
+    return res.status(404).json({
+      message: 'No user with this information exists'
+    });
+  }
+
+  foundUser.token = accessToken;
   res.json({
     accessToken
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.delete('/logout', (req, res) => {
+  const username = req.body.username;
+
+  if (!username) {
+    return res.status(401).json({
+      message: 'Please provide a username'
+    });
+  }
+
+  const foundUser = users.find(u => u.username === username);
+
+  if (!foundUser) {
+    return res.status(404).json({
+      message: 'No user with this information exists'
+    });
+  }
+
+  foundUser.token = '';
+  res.status(204).send();
 });
